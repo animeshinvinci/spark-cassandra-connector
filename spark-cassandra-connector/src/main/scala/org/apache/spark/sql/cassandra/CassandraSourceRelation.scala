@@ -169,22 +169,22 @@ object CassandraSourceRelation {
    * Consolidate Cassandra conf settings in the order of table level -> keyspace level ->
    * cluster level -> default. Use the first available setting
    */
-  def consolidateConfs(sqlContext: SQLContext, tableRef: TableRef, cassandraConfs: Map[String, String]) : SparkConf = {
+  def consolidateConfs(sqlContext: SQLContext, tableRef: TableRef, tableConf: Map[String, String]) : SparkConf = {
     //Default settings
     val conf = sqlContext.sparkContext.getConf.clone()
     //Keyspace/Cluster level settings
     val sqlConf = sqlContext.getAllConfs
-    for (prop <- DefaultSource.confProperties) {
+    for (defaultProp <- DefaultSource.confProperties) {
       val cluster = tableRef.cluster.getOrElse(defaultClusterName)
-      val clusterLevelValue = sqlConf.get(s"$cluster/$prop")
+      val clusterLevelValue = sqlConf.get(s"$cluster/$defaultProp")
       if (clusterLevelValue.nonEmpty)
-        conf.set(prop, clusterLevelValue.get)
-      val keyspaceLevelValue = sqlConf.get(s"$cluster:${tableRef.keyspace}/$prop")
+        conf.set(defaultProp, clusterLevelValue.get)
+      val keyspaceLevelValue = sqlConf.get(s"$cluster:${tableRef.keyspace}/$defaultProp")
       if (keyspaceLevelValue.nonEmpty)
-        conf.set(prop, keyspaceLevelValue.get)
-      val tableLevelValue = cassandraConfs.get(prop)
+        conf.set(defaultProp, keyspaceLevelValue.get)
+      val tableLevelValue = tableConf.get(defaultProp)
       if (tableLevelValue.nonEmpty)
-        conf.set(prop, tableLevelValue.get)
+        conf.set(defaultProp, tableLevelValue.get)
     }
     conf
   }
